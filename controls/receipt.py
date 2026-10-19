@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Renders a full receipt as a black-and-white image, 576 dots wide (80mm).
 
-Top: the poem for the knob values. Below it: the five research departments in
-random order, each with its own blank chart to fill in by hand with ink.
+Top: the ministry letterhead with the poem's title as subtitle, then the poem
+for the knob values. Below it: the five research departments in random order,
+each with its own blank chart to fill in by hand with ink.
 
 Preview without a printer:
   python3 receipt.py 10 10 10 --out preview.png
@@ -12,7 +13,6 @@ import math
 import random
 import sys
 from dataclasses import dataclass
-from datetime import datetime
 from functools import cache
 from pathlib import Path
 from typing import Callable
@@ -267,20 +267,26 @@ class Canvas:
         return img.point(lambda v: PAPER if v > 140 else INK).convert("1")
 
 
+def draw_header(c: Canvas, subtitle: str):
+    c.rule(width=4)
+    c.space(16)
+    c.text("MINISTERIE VAN", MONO_BOLD(40), 48, center=True)
+    c.text("HERVERBINDING", MONO_BOLD(40), 48, center=True)
+    c.space(10)
+    c.rule(width=1)
+    c.space(16)
+    c.text(subtitle, MONO_BOLD(28), 38, center=True)
+
+
 def draw_poem(c: Canvas, values, rng):
     title, stanzas = poems.poem(values, rng)
-    c.text(title, MONO_BOLD(28), 38, center=True)
+    draw_header(c, title)
     c.space(18)
     for i, stanza in enumerate(stanzas):
         if i:
             c.space(20)
         for line in stanza:
             c.text(line, SERIF(23), 31)
-    c.space(22)
-    c.rule(width=1, dashed=True)
-    c.space(12)
-    c.text(poems.settings(values), MONO(17), 24)
-    c.text(datetime.now().strftime("%Y-%m-%d %H:%M"), MONO(17), 24)
 
 
 def draw_department(c: Canvas, dep: Department):
@@ -303,8 +309,6 @@ def render(values: list[int], rng: random.Random | None = None) -> Image.Image:
     c = Canvas()
     draw_poem(c, values, rng)
     c.space(40)
-    c.text("IN TE VULLEN MET INKT", MONO(18), 26, center=True)
-    c.space(16)
     for dep in rng.sample(DEPARTMENTS, len(DEPARTMENTS)):
         draw_department(c, dep)
     c.rule(width=3)

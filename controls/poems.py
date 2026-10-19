@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Poems about losing touch with nature, and finding the way back.
+"""Gedichten over het verloren contact met de natuur, en de weg terug.
 
 Each knob (0..KNOB_MAX) picks a level for one part of the poem:
 
@@ -10,30 +10,29 @@ Each knob (0..KNOB_MAX) picks a level for one part of the poem:
 The poem has two stanzas: the loss (a place couplet and a season couplet)
 and the way back (reaching out, an encounter, the ending). Within a level,
 couplets are picked at random, so the same knob settings give a different
-poem on every print. Every couplet is a complete sentence,
-so any combination reads correctly. Keep lines under ~42 characters (80mm
-paper fits 48) and stick to plain ASCII: no curly quotes or dashes.
+poem on every print. Every couplet is a complete sentence that stands on its
+own, so any combination reads correctly. The receipt is printed as an image,
+so accents are fine; keep lines under ~44 characters so they fit the paper.
 
 Try it:  python3 poems.py 10 10 10     (or --samples for a spread)
 """
 
 import random
 import sys
-from datetime import datetime
 
 KNOB_MAX = 20
-WIDTH = 48
+MAX_LINE = 44
 
 TITLES = [
-    "FIELD NOTES",
-    "RECEIPT FOR A LOST THING",
-    "PROOF OF PRESENCE",
-    "RETURN POLICY",
-    "LOST AND FOUND",
-    "INVENTORY",
-    "THE WAY BACK",
-    "NOTES FROM THE EDGE",
-    "A SMALL RETURN",
+    "VELDNOTITIES",
+    "BON VOOR IETS VERLORENS",
+    "BEWIJS VAN AANWEZIGHEID",
+    "RETOURBELEID",
+    "GEVONDEN VOORWERPEN",
+    "INVENTARIS",
+    "DE WEG TERUG",
+    "NOTITIES VAN DE RAND",
+    "EEN KLEINE TERUGKEER",
 ]
 
 # --- Where we are (by wildness) --------------------------------------------
@@ -41,53 +40,53 @@ PLACE = [
     # 0: deep city
     (
         [
-            "I knew the names of birds once.\nNow I know the names of apps.",
-            "My days are lit from the inside,\na blue weather behind glass.",
-            "I live eleven floors above\nanything that grows on purpose.",
+            "Ik kende ooit de namen van vogels.\nNu ken ik de namen van apps.",
+            "Mijn dagen zijn van binnen verlicht,\neen blauw weer achter glas.",
+            "Ik woon elf verdiepingen boven\nalles wat met opzet groeit.",
         ],
         [
-            "The fridge hums its one long note\nall night, and I call it company.",
-            "Even the trees on my street\nare numbered, and fenced, and tired.",
-            "I measure the seasons in sales,\nin the colour of the coffee cups.",
+            "De koelkast zoemt de hele nacht zijn toon,\nen ik noem het gezelschap.",
+            "Zelfs de bomen in mijn straat\nzijn genummerd, omheind en moe.",
+            "Ik meet de seizoenen in aanbiedingen,\nin de kleur van de koffiebekers.",
         ],
     ),
     # 1: suburb
     (
         [
-            "Our garden is a square of lawn\nwe cut before it can say anything.",
-            "There is a ditch behind the houses\nwhere the frogs still keep their hours.",
-            "I drive past the same field daily\nand have never once stood in it.",
+            "Onze tuin is een vierkantje gras\ndat we maaien voor het iets kan zeggen.",
+            "Achter de huizen ligt een sloot\nwaar de kikkers nog hun uren houden.",
+            "Elke dag rijd ik langs hetzelfde weiland\nen nooit heb ik erin gestaan.",
         ],
         [
-            "The hedges are trimmed into silence.\nThe gutters keep what the sky sends.",
-            "At night the streetlights erase\nevery star but the stubborn ones.",
-            "My children know the dinosaurs\nbetter than the sparrows at the feeder.",
+            "De heggen zijn tot stilte geknipt.\nDe goten bewaren wat de hemel stuurt.",
+            "'s Nachts wissen de lantaarnpalen\nelke ster, behalve de koppige.",
+            "Mijn kinderen kennen de dinosaurussen\nbeter dan de mussen bij het voerhuisje.",
         ],
     ),
     # 2: edge of town
     (
         [
-            "The river still runs behind\nthe car park, under the noise.",
-            "The bus line ends at a wood\nI have only seen from the window.",
-            "I walk the park on the paved path,\nthe one that tells me where to go.",
+            "De rivier stroomt nog altijd achter\nhet parkeerterrein, onder het lawaai.",
+            "De buslijn eindigt bij een bos\ndat ik alleen vanuit het raam ken.",
+            "Ik loop door het park op het betegelde pad,\nhet pad dat zegt waar ik heen moet.",
         ],
         [
-            "I hear it only when the traffic stops,\nwhich is almost never.",
-            "The oaks there are older than the town\nand do not seem to mind it.",
-            "I carry my phone like a lantern\nthough it is not dark at all.",
+            "Ik hoor de rivier alleen als het stil is,\nen het is bijna nooit stil.",
+            "De eiken daar zijn ouder dan de stad\nen lijken het niet erg te vinden.",
+            "Ik draag mijn telefoon als een lantaarn,\nook al is het helemaal niet donker.",
         ],
     ),
     # 3: the wild
     (
         [
-            "I came out here to the far field\nwith nothing but a borrowed map.",
-            "The forest starts where the signal ends.\nI did not plan it that way.",
-            "Up here the wind has no address\nand the path forgets itself in heather.",
+            "Ik kwam hier naar het verste veld\nmet niets dan een geleende kaart.",
+            "Het bos begint waar het bereik ophoudt.\nZo had ik het niet gepland.",
+            "Hierboven heeft de wind geen adres\nen verliest het pad zich in de heide.",
         ],
         [
-            "Still I keep reaching for my pocket,\nfor a light that is not there.",
-            "Even here I hear the motorway,\na grey river in the distance.",
-            "I know I should feel at home.\nI feel like a guest who came late.",
+            "Toch grijp ik steeds naar mijn zak,\nnaar een licht dat er niet is.",
+            "Zelfs hier hoor ik de snelweg,\neen grijze rivier in de verte.",
+            "Ik weet dat ik me thuis zou moeten voelen.\nIk voel me een gast die te laat kwam.",
         ],
     ),
 ]
@@ -98,53 +97,53 @@ SEASON = [
     # 0: winter
     (
         [
-            "It is winter. The frost has written\nsomething on every window.",
-            "The cold comes in like an old friend\nwho never learned to knock.",
-            "Snow fell overnight and covered\nthe difference between things.",
+            "Het is winter. De vorst heeft iets\ngeschreven op elk raam.",
+            "De kou komt binnen als een oude vriend\ndie nooit heeft leren kloppen.",
+            "Vannacht viel er sneeuw, en die bedekte\nhet verschil tussen de dingen.",
         ],
         [
-            "The birds that stayed are small and loud,\nkeeping the light alive by talking.",
-            "Under the ice the water moves,\npatient, with somewhere to be.",
-            "The bare trees show their whole design,\nthe one that summer hides.",
+            "De vogels die bleven zijn klein en luid;\nze praten het licht in leven.",
+            "Onder het ijs beweegt het water,\ngeduldig, op weg naar ergens.",
+            "De kale bomen tonen hun hele ontwerp,\nhet ontwerp dat de zomer verbergt.",
         ],
     ),
     # 1: spring
     (
         [
-            "It is spring. Something green\nhas broken through the asphalt.",
-            "The rain arrives in short sentences\nand the soil answers every one.",
-            "The blossom came out all at once,\nas if someone had called its name.",
+            "Het is lente. Er is iets groens\ndoor het asfalt gebroken.",
+            "De regen komt in korte zinnen\nen de aarde beantwoordt ze allemaal.",
+            "De bloesem kwam ineens tevoorschijn,\nalsof iemand haar naam had geroepen.",
         ],
         [
-            "The blackbird starts before the dawn,\nrehearsing for nobody.",
-            "Everything is beginning again\nwithout asking for permission.",
-            "The mud smells like a memory\nI am not old enough to have.",
+            "De merel begint al voor de dageraad.\nHij repeteert voor niemand.",
+            "Alles begint opnieuw\nzonder om toestemming te vragen.",
+            "De modder ruikt naar een herinnering\ndie ik te jong ben om te hebben.",
         ],
     ),
     # 2: summer
     (
         [
-            "It is summer, and the long light\nlingers on the rooftops until ten.",
-            "The heat sits on the pavement\nand the grass goes gold with waiting.",
-            "The swifts are back, screaming\ntheir thin circles over the roofs.",
+            "Het is zomer, en het lange licht\nblijft tot tien uur op de daken hangen.",
+            "De hitte ligt op de stoep\nen het gras wordt goud van het wachten.",
+            "De gierzwaluwen zijn terug en krijsen\nhun dunne cirkels boven de daken.",
         ],
         [
-            "Bees work the clover in the verges\nthat the mowers somehow missed.",
-            "At dusk the air fills up with insects\nand the bats come out to read them.",
-            "A thunderstorm builds in the west\nlike a thought I almost have.",
+            "Bijen bewerken de klaver in de berm\ndie de maaimachine heeft gespaard.",
+            "Bij schemer vult de lucht zich met insecten\nen de vleermuizen komen ze lezen.",
+            "In het westen bouwt een onweer zich op,\nals een gedachte die ik bijna heb.",
         ],
     ),
     # 3: autumn
     (
         [
-            "It is autumn. The trees are letting go\nof everything they held all year.",
-            "The geese go over in their letters,\nspelling out a word for leaving.",
-            "Rain on the windows, rain on the leaves,\nthe whole world softening.",
+            "Het is herfst. De bomen laten los\nwat ze het hele jaar vasthielden.",
+            "De ganzen trekken over in hun letters\nen spellen een woord voor vertrekken.",
+            "Regen op de ramen, regen op de bladeren,\nde hele wereld wordt zachter.",
         ],
         [
-            "Mushrooms rise in the night\nlike they have heard a rumour.",
-            "The light comes low and golden\nand leaves earlier each day.",
-            "The smell of wet earth reaches me\neven here, even now.",
+            "Paddenstoelen rijzen op in de nacht,\nalsof ze een gerucht hebben gehoord.",
+            "Het licht valt laag en goudkleurig\nen vertrekt elke dag wat eerder.",
+            "De geur van natte aarde bereikt me,\nzelfs hier, zelfs nu.",
         ],
     ),
 ]
@@ -153,27 +152,27 @@ SEASON = [
 REACH = [
     # 0: deep city
     [
-        "Today I put my hand flat\non the bark of the one street tree.",
-        "I opened the window wide\nand let the weather into the room.",
-        "I left my phone on the table\nand walked until the shops ran out.",
+        "Vandaag legde ik mijn hand plat\ntegen de bast van de enige straatboom.",
+        "Ik zette het raam wijd open\nen liet het weer de kamer in.",
+        "Ik liet mijn telefoon op tafel liggen\nen liep tot de winkels ophielden.",
     ],
     # 1: suburb
     [
-        "Today I took my shoes off\nin the wet grass by the station.",
-        "I knelt down in the garden\nand pushed my hands into the dirt.",
-        "I followed the ditch past the fences\nto where the reeds begin.",
+        "Vandaag deed ik mijn schoenen uit\nin het natte gras bij het station.",
+        "Ik knielde in de tuin\nen duwde mijn handen in de aarde.",
+        "Ik volgde de sloot langs de hekken\ntot waar het riet begint.",
     ],
     # 2: edge of town
     [
-        "Today I stepped off the paved path\nand let the mud have my shoes.",
-        "I sat under the oldest oak\nuntil my breathing slowed to match it.",
-        "I followed the sound of the river\nuntil I found the river.",
+        "Vandaag stapte ik van het pad af\nen gaf mijn schoenen aan de modder.",
+        "Ik zat onder de oudste eik\ntot mijn adem trager werd, net als de zijne.",
+        "Ik volgde het geluid van de rivier\ntot ik de rivier vond.",
     ],
     # 3: the wild
     [
-        "Today I lay down in the heather\nand let the sky go on without me.",
-        "I drank from the stream with my hands\nthe way I must have once.",
-        "I turned off the map\nand walked by the shape of the hills.",
+        "Vandaag ging ik liggen in de heide\nen liet de lucht verdergaan zonder mij.",
+        "Ik dronk uit de beek met mijn handen,\nzoals ik dat ooit gedaan moet hebben.",
+        "Ik zette de kaart uit\nen liep op de vorm van de heuvels.",
     ],
 ]
 
@@ -183,60 +182,56 @@ ENDING = [
     # 0: lost
     (
         [
-            "A crow watched me from the wire\nand decided I was nothing.",
-            "A bird called once, close by,\nand I could not tell you which.",
-            "Something moved in the grass\nand was gone before I turned.",
+            "Een kraai bekeek me vanaf de draad\nen besloot dat ik niets was.",
+            "Vlakbij riep een vogel, één keer,\nen ik kan je niet zeggen welke.",
+            "Er bewoog iets in het gras\nen het was weg voor ik me omdraaide.",
         ],
         [
-            "I went home and turned on the lights.\nThe screen was glad to see me.",
-            "I don't remember the words.\nI'm not sure there were any.",
-            "Whatever it was, it was not for me.\nI walked back to the noise.",
+            "Ik ging naar huis en deed het licht aan.\nHet scherm was blij me te zien.",
+            "Ik weet de woorden niet meer.\nIk weet niet of er woorden waren.",
+            "Wat het ook was, het was niet voor mij.\nIk liep terug naar het lawaai.",
         ],
     ),
     # 1: unsure
     (
         [
-            "Then a blackbird, close enough\nto touch, said something plain.",
-            "A fox crossed the path ahead\nand did not hurry, and did not stay.",
-            "The wind came through the leaves\nwith a sound like a held breath.",
+            "Toen zei een merel, zo dichtbij\ndat ik hem kon aanraken, iets eenvoudigs.",
+            "Een vos stak het pad over\nen haastte zich niet, en bleef niet.",
+            "De wind ging door de bladeren\nmet een geluid als ingehouden adem.",
         ],
         [
-            "I didn't catch the word.\nI think I'll come back tomorrow.",
-            "I don't know the language yet,\nbut I know it's being spoken.",
-            "Nothing was fixed.\nBut something was unlocked.",
+            "Ik verstond het woord niet.\nIk denk dat ik morgen terugkom.",
+            "Ik ken de taal nog niet,\nmaar ik weet dat ze gesproken wordt.",
+            "Er was niets opgelost.\nMaar er was iets van het slot.",
         ],
     ),
     # 2: hopeful
     (
         [
-            "Then a wren, no bigger than a thought,\nsang from the bramble at my side.",
-            "A deer lifted its head\nand held my gaze for a while.",
-            "The light came through the branches\nand lay down on my hands.",
+            "Toen zong een winterkoning,\nniet groter dan een gedachte.",
+            "Een ree hief haar kop op\nen hield een tijdje mijn blik vast.",
+            "Het licht viel door de takken\nen ging liggen op mijn handen.",
         ],
         [
-            "I didn't catch the word.\nI'm learning it again.",
-            "I said nothing back,\nwhich was the right reply.",
-            "I knew, for a moment, its name,\nand that it had always known mine.",
+            "Ik verstond het woord niet.\nIk ben het opnieuw aan het leren.",
+            "Ik zei niets terug,\nen dat was het juiste antwoord.",
+            "Even wist ik hoe het heette,\nen dat het mij altijd al kende.",
         ],
     ),
     # 3: found
     (
         [
-            "Then the whole hedge woke with birds,\nand every one was speaking.",
-            "A heron rose up from the water\nslow as a door opening.",
-            "The rain began, and I let it,\nand it felt like being known.",
+            "Toen werd de hele heg wakker van vogels,\nen elke vogel sprak.",
+            "Een reiger steeg op uit het water,\nlangzaam als een deur die opengaat.",
+            "Het begon te regenen, en ik liet het toe,\nen het voelde als gekend worden.",
         ],
         [
-            "I am not a visitor here.\nI never was.",
-            "I took the long way home,\nand home was larger than before.",
-            "The world was speaking all along.\nI had only stopped listening.",
+            "Ik ben hier geen bezoeker.\nDat ben ik nooit geweest.",
+            "Ik nam de lange weg naar huis,\nen thuis was groter dan voorheen.",
+            "De wereld sprak al die tijd.\nIk was alleen gestopt met luisteren.",
         ],
     ),
 ]
-
-WILDNESS_NAMES = ["city", "suburb", "edge", "wild"]
-SEASON_NAMES = ["winter", "spring", "summer", "autumn"]
-HOPE_NAMES = ["lost", "unsure", "hopeful", "found"]
 
 
 def level(value: int, levels: int) -> int:
@@ -270,42 +265,25 @@ def compose(values: list[int], rng: random.Random | None = None) -> str:
     return f"{title}\n\n{body}"
 
 
-def settings(values: list[int]) -> str:
-    """The knob settings in words, e.g. 'edge 14 / summer 14 / hopeful 14'."""
-    wildness, season, hope = values
-    return (
-        f"{WILDNESS_NAMES[level(wildness, 4)]} {wildness}"
-        f" / {SEASON_NAMES[level(season, 4)]} {season}"
-        f" / {HOPE_NAMES[level(hope, 4)]} {hope}"
-    )
-
-
-def footer(values: list[int]) -> str:
-    return "\n".join(["-" * WIDTH, settings(values), datetime.now().strftime("%Y-%m-%d %H:%M")])
-
-
-def receipt(values: list[int], rng: random.Random | None = None) -> str:
-    return f"{compose(values, rng)}\n\n{footer(values)}"
-
-
 def _check_banks() -> None:
-    """Every line fits the paper and is plain ASCII."""
-    banks = [TITLES, *REACH]
+    """Every couplet has two lines, each short enough for the paper."""
+    banks = [*REACH]
     for group in (PLACE, SEASON, ENDING):
         for slots in group:
             banks.extend(slots)
     for bank in banks:
         for couplet in bank:
-            for line in couplet.split("\n"):
-                assert len(line) <= WIDTH, f"too long: {line!r}"
-                assert line.isascii(), f"not ASCII: {line!r}"
+            lines = couplet.split("\n")
+            assert len(lines) == 2, f"not a couplet: {couplet!r}"
+            for line in lines:
+                assert len(line) <= MAX_LINE, f"too long: {line!r}"
 
 
 if __name__ == "__main__":
     _check_banks()
     if sys.argv[1:] == ["--samples"]:
         for values in ([0, 0, 0], [7, 7, 7], [14, 14, 14], [20, 20, 20]):
-            print(receipt(values), end="\n\n\n")
+            print(compose(values), end="\n\n\n")
     else:
         knobs = [int(v) for v in sys.argv[1:4]] or [10, 10, 10]
-        print(receipt(knobs))
+        print(compose(knobs))

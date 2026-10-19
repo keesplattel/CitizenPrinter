@@ -1,8 +1,10 @@
 # CitizenPrinter
 
 A Raspberry Pi with three knobs and a button that prints receipts on a Citizen
-80mm thermal printer. Each receipt starts with a short poem about losing touch
-with nature and trying to find the way back (the knobs steer it), followed by
+80mm thermal printer. Each receipt starts with the letterhead of the *Ministerie
+van Herverbinding* and a short Dutch poem about losing touch with nature and
+trying to find the way back (the knobs steer it; its title is the subtitle),
+followed by
 five research departments in random order, each with a blank chart to fill in
 by hand with ink.
 
@@ -50,10 +52,10 @@ bash ~/CitizenPrinter/update.sh
 
 ## Writing poems
 
-The line banks live in `controls/poems.py`. Every entry is a two-line couplet
-that forms a complete sentence, so any combination reads correctly. Keep lines
-under ~42 characters and use plain ASCII (no curly quotes or long dashes, as the
-printer can't print them).
+The Dutch line banks live in `controls/poems.py`. Every entry is a two-line
+couplet that forms a complete sentence on its own, so any combination reads
+correctly. Keep lines under ~44 characters; accents are fine, since the receipt
+is printed as an image.
 
 Try poems without the hardware:
 
