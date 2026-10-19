@@ -2,8 +2,9 @@
 """Renders a full receipt as a black-and-white image, 576 dots wide (80mm).
 
 Top: the ministry letterhead with the poem's title as subtitle, then the poem
-for the knob values. Below it: the five research departments in random order,
-each with its own blank chart to fill in by hand with ink.
+for the knob values and the visitor instructions. Below it: the five research
+departments in random order, each with its own blank chart to fill in by hand
+with ink, and a small thank-you footer.
 
 Preview without a printer:
   python3 receipt.py 10 10 10 --out preview.png
@@ -247,12 +248,12 @@ class Canvas:
     def space(self, h):
         self.y += h
 
-    def text(self, text, f, line_height, center=False):
-        for line in wrap(self.d, text, f, CONTENT):
+    def text(self, text, f, line_height, center=False, inset=0):
+        for line in wrap(self.d, text, f, CONTENT - 2 * inset):
             if center:
                 text_center(self.d, WIDTH / 2, self.y, line, f)
             else:
-                self.d.text((MARGIN, self.y), line, font=f, fill=INK)
+                self.d.text((MARGIN + inset, self.y), line, font=f, fill=INK)
             self.y += line_height
 
     def rule(self, width=2, dashed=False):
@@ -304,14 +305,38 @@ def draw_department(c: Canvas, dep: Department):
     c.space(30)
 
 
+INSTRUCTIONS = (
+    "Treed binnen in het Ministerie en ga naar de afdeling die als eerste op dit"
+    " document staat, is de afdeling bezig met een onderzoek, vervolg dan naar een"
+    " andere afdeling."
+)
+FOOTER = "Het Ministerie van Herverbinding dankt u voor uw deelname in dit experiment."
+
+
+def draw_instructions(c: Canvas):
+    """The instructions in a framed notice."""
+    pad = 16
+    top = c.y
+    c.space(pad)
+    c.text("INSTRUCTIES", MONO_BOLD(19), 28, inset=pad)
+    c.space(4)
+    c.text(INSTRUCTIONS, SERIF(20), 27, inset=pad)
+    c.space(pad)
+    c.d.rectangle([MARGIN, top, WIDTH - MARGIN, c.y], outline=INK, width=2)
+
+
 def render(values: list[int], rng: random.Random | None = None) -> Image.Image:
     rng = rng or random.Random()
     c = Canvas()
     draw_poem(c, values, rng)
+    c.space(30)
+    draw_instructions(c)
     c.space(40)
     for dep in rng.sample(DEPARTMENTS, len(DEPARTMENTS)):
         draw_department(c, dep)
     c.rule(width=3)
+    c.space(14)
+    c.text(FOOTER, SERIF_ITALIC(16), 21, center=True)
     return c.finish()
 
 
