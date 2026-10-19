@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Renders a full receipt as a black-and-white image, 576 dots wide (80mm).
 
-Top: the ministry letterhead with the poem's title as subtitle, then the poem
+Top: the ministry logo with the poem's title as subtitle, then the poem
 for the knob values and the visitor instructions. Below it: the five research
 departments in random order, each with its own blank chart to fill in by hand
 with ink, and a small thank-you footer.
@@ -26,6 +26,8 @@ WIDTH = 576  # printable dots on 80mm paper at 203 dpi
 MARGIN = 24
 CONTENT = WIDTH - 2 * MARGIN
 FONTS = Path(__file__).parent / "fonts"
+LOGO = Path(__file__).parent.parent / "logo.png"  # drawn by make_logo.py
+LOGO_WIDTH = WIDTH // 2
 
 INK = 0
 PAPER = 255
@@ -211,7 +213,7 @@ DEPARTMENTS = [
         " naar een toestand van rust.",
         line_graph,
         "Lijngrafiek",
-        "Zet de punten, verbind ze daarna met een liniaal.",
+        "Zet de waargenomen punten en verbind ze met een lijn.",
     ),
     Department(
         4,
@@ -220,7 +222,7 @@ DEPARTMENTS = [
         " wederzijdse afhankelijkheid.",
         pictograph,
         "Pictogram",
-        "Eén symbool = ____ . Teken halve symbolen voor de rest.",
+        "Kruis hoeveelheden tot de waargenomen waarde, halve waarde is een enkele lijn.",
     ),
     Department(
         5,
@@ -268,14 +270,15 @@ class Canvas:
         return img.point(lambda v: PAPER if v > 140 else INK).convert("1")
 
 
+@cache
+def logo() -> Image.Image:
+    img = Image.open(LOGO).convert("L")
+    return img.resize((LOGO_WIDTH, round(img.height * LOGO_WIDTH / img.width)), Image.LANCZOS)
+
+
 def draw_header(c: Canvas, subtitle: str):
-    c.rule(width=4)
-    c.space(16)
-    c.text("MINISTERIE VAN", MONO_BOLD(40), 48, center=True)
-    c.text("HERVERBINDING", MONO_BOLD(40), 48, center=True)
-    c.space(10)
-    c.rule(width=1)
-    c.space(16)
+    c.img.paste(logo(), ((WIDTH - LOGO_WIDTH) // 2, c.y))
+    c.space(logo().height + 24)
     c.text(subtitle, MONO_BOLD(28), 38, center=True)
 
 

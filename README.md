@@ -1,7 +1,7 @@
 # CitizenPrinter
 
 A Raspberry Pi with three knobs and a button that prints receipts on a Citizen
-80mm thermal printer. Each receipt starts with the letterhead of the *Ministerie
+80mm thermal printer. Each receipt starts with the logo of the *Ministerie
 van Herverbinding* and a short Dutch poem about losing touch with nature and
 trying to find the way back (the knobs steer it; its title is the subtitle),
 followed by
