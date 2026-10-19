@@ -7,8 +7,10 @@ Each knob (0..KNOB_MAX) picks a level for one part of the poem:
   knob 2  season    winter -> spring -> summer -> autumn
   knob 3  hope      lost -> unsure -> hopeful -> found
 
-Within a level, couplets are picked at random, so the same knob settings
-give a different poem on every print. Every couplet is a complete sentence,
+The poem has two stanzas: the loss (a place couplet and a season couplet)
+and the way back (reaching out, an encounter, the ending). Within a level,
+couplets are picked at random, so the same knob settings give a different
+poem on every print. Every couplet is a complete sentence,
 so any combination reads correctly. Keep lines under ~42 characters (80mm
 paper fits 48) and stick to plain ASCII: no curly quotes or dashes.
 
@@ -34,8 +36,7 @@ TITLES = [
     "A SMALL RETURN",
 ]
 
-# --- Stanza 1: where we are (by wildness) ---------------------------------
-# Two slots per level; one couplet is drawn from each.
+# --- Where we are (by wildness) --------------------------------------------
 PLACE = [
     # 0: deep city
     (
@@ -91,7 +92,7 @@ PLACE = [
     ),
 ]
 
-# --- Stanza 2: the season (by season) -------------------------------------
+# --- The season (by season) ------------------------------------------------
 # Written to work in any place, from city to forest.
 SEASON = [
     # 0: winter
@@ -148,7 +149,7 @@ SEASON = [
     ),
 ]
 
-# --- Stanza 3: reaching out (action by wildness, then a shared turn) -------
+# --- Reaching out (by wildness) --------------------------------------------
 REACH = [
     # 0: deep city
     [
@@ -176,16 +177,7 @@ REACH = [
     ],
 ]
 
-TURN = [
-    "I waited like a question\nthe ground forgot to answer.",
-    "For a long time nothing happened.\nThat was the first lesson.",
-    "My body remembered something\nmy mind had filed away.",
-    "I felt foolish, and then less foolish,\nand then nothing but the air.",
-    "It is harder than it sounds,\nto be somewhere completely.",
-    "I did not know what I was listening for.\nI listened anyway.",
-]
-
-# --- Stanza 4: the ending (by hope) ---------------------------------------
+# --- The ending (by hope) --------------------------------------------------
 # Slot 1 is an encounter, slot 2 is the closing couplet.
 ENDING = [
     # 0: lost
@@ -253,8 +245,11 @@ def level(value: int, levels: int) -> int:
     return min(value * levels // (KNOB_MAX + 1), levels - 1)
 
 
-def compose(values: list[int], rng: random.Random | None = None) -> str:
-    """Write a poem for knob values [wildness, season, hope]."""
+def poem(values: list[int], rng: random.Random | None = None) -> tuple[str, list[list[str]]]:
+    """Write a poem for knob values [wildness, season, hope].
+
+    Returns the title and the stanzas, each a list of lines.
+    """
     rng = rng or random.Random()
     wildness, season, hope = values
     w = level(wildness, len(PLACE))
@@ -262,24 +257,31 @@ def compose(values: list[int], rng: random.Random | None = None) -> str:
     h = level(hope, len(ENDING))
 
     stanzas = [
-        [rng.choice(PLACE[w][0]), rng.choice(PLACE[w][1])],
-        [rng.choice(SEASON[s][0]), rng.choice(SEASON[s][1])],
-        [rng.choice(REACH[w]), rng.choice(TURN)],
-        [rng.choice(ENDING[h][0]), rng.choice(ENDING[h][1])],
+        [rng.choice(PLACE[w][0] + PLACE[w][1]), rng.choice(SEASON[s][0] + SEASON[s][1])],
+        [rng.choice(REACH[w]), rng.choice(ENDING[h][0]), rng.choice(ENDING[h][1])],
     ]
     title = rng.choice(TITLES)
+    return title, ["\n".join(stanza).split("\n") for stanza in stanzas]
+
+
+def compose(values: list[int], rng: random.Random | None = None) -> str:
+    title, stanzas = poem(values, rng)
     body = "\n\n".join("\n".join(stanza) for stanza in stanzas)
     return f"{title}\n\n{body}"
 
 
-def footer(values: list[int]) -> str:
+def settings(values: list[int]) -> str:
+    """The knob settings in words, e.g. 'edge 14 / summer 14 / hopeful 14'."""
     wildness, season, hope = values
-    settings = (
+    return (
         f"{WILDNESS_NAMES[level(wildness, 4)]} {wildness}"
         f" / {SEASON_NAMES[level(season, 4)]} {season}"
         f" / {HOPE_NAMES[level(hope, 4)]} {hope}"
     )
-    return "\n".join(["-" * WIDTH, settings, datetime.now().strftime("%Y-%m-%d %H:%M")])
+
+
+def footer(values: list[int]) -> str:
+    return "\n".join(["-" * WIDTH, settings(values), datetime.now().strftime("%Y-%m-%d %H:%M")])
 
 
 def receipt(values: list[int], rng: random.Random | None = None) -> str:
@@ -288,7 +290,7 @@ def receipt(values: list[int], rng: random.Random | None = None) -> str:
 
 def _check_banks() -> None:
     """Every line fits the paper and is plain ASCII."""
-    banks = [TITLES, TURN, *REACH]
+    banks = [TITLES, *REACH]
     for group in (PLACE, SEASON, ENDING):
         for slots in group:
             banks.extend(slots)

@@ -2,24 +2,31 @@
 """Physical controls for the receipt printer.
 
 Three rotary encoders set values 0..KNOB_MAX (wildness, season, hope); the
-button prints a poem for them via the receiptprinter HTTP service (see
-poems.py). Pushing an encoder resets it to the middle. The button LED is on
-when ready, blinks while printing, and flashes fast after an error.
+button prints a receipt for them: a poem (poems.py) and the five department
+charts (receipt.py), rendered as an image and written straight to the printer
+device. Pushing an encoder resets it to the middle. The button LED is on when
+ready, blinks while printing, and flashes fast after an error.
 
-Pins are BCM numbers and can be overridden with environment variables.
+Pins are BCM numbers and can be overridden with environment variables. Set
+DRY_RUN=1 to save each receipt as a PNG (PREVIEW_PATH) instead of printing.
 """
 
 import logging
 import os
 import signal
 import threading
-import urllib.request
+import tty
+from pathlib import Path
 
 from gpiozero import LED, Button, RotaryEncoder
 
+import escpos
 import poems
+import receipt
 
-PRINT_URL = os.environ.get("PRINT_URL", "http://localhost:4180/print")
+PRINTER_DEVICE = os.environ.get("PRINTER_DEVICE", "/dev/usb/lp0")
+DRY_RUN = os.environ.get("DRY_RUN", "0") in ("1", "true")
+PREVIEW_PATH = Path(os.environ.get("PREVIEW_PATH", Path(__file__).parent.parent / "last-print.png"))
 
 # (S1/CLK, S2/DT, SW) per encoder
 ENCODER_PINS = [
@@ -33,15 +40,19 @@ KNOB_START = poems.KNOB_MAX // 2
 log = logging.getLogger("controls")
 
 
-def send_to_printer(text: str) -> None:
-    req = urllib.request.Request(
-        PRINT_URL,
-        data=text.encode("utf-8"),
-        headers={"Content-Type": "text/plain; charset=utf-8"},
-        method="POST",
-    )
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        log.info("printer: %s %s", resp.status, resp.read().decode(errors="replace"))
+def print_receipt(values: list[int]) -> None:
+    img = receipt.render(values)
+    if DRY_RUN:
+        img.save(PREVIEW_PATH)
+        log.info("dry run: saved %s (%dx%d)", PREVIEW_PATH, img.width, img.height)
+        return
+    data = escpos.receipt(img)
+    with open(PRINTER_DEVICE, "wb") as dev:
+        if dev.isatty():
+            # Serial-mode printers (/dev/ttyACM0): pass bytes through untouched.
+            tty.setraw(dev.fileno())
+        dev.write(data)
+    log.info("printed %d bytes to %s", len(data), PRINTER_DEVICE)
 
 
 class Controls:
@@ -79,9 +90,8 @@ class Controls:
             return  # already printing; ignore extra presses
         try:
             self.led.blink(on_time=0.15, off_time=0.15)
-            text = poems.receipt(self.values)
             log.info("printing %s", self.values)
-            send_to_printer(text)
+            print_receipt(self.values)
             self.led.on()
         except Exception:
             log.exception("print failed")

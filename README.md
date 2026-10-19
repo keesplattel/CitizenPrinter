@@ -1,9 +1,18 @@
 # CitizenPrinter
 
-A Raspberry Pi with three knobs and a button that prints poems on a Citizen
-80mm thermal receipt printer. The poems are about losing touch with nature and
-trying to find the way back; the knobs steer them, and every press prints a
-new one.
+A Raspberry Pi with three knobs and a button that prints receipts on a Citizen
+80mm thermal printer. Each receipt starts with a short poem about losing touch
+with nature and trying to find the way back (the knobs steer it), followed by
+five research departments in random order, each with a blank chart to fill in
+by hand with ink.
+
+| Department | Chart |
+|---|---|
+| 1 Uitgestorven gewoontes | bar chart |
+| 2 Ecosysteemintegratie | pie chart |
+| 3 Nervositeitsreductie | line graph |
+| 4 Symbiose & wederkerigheid | pictograph |
+| 5 Verwonderingsonderzoek | dot plot |
 
 | Knob | Controls | Low → high |
 |---|---|---|
@@ -17,11 +26,13 @@ error.
 
 ## How it fits together
 
-- **Print service**: [dandriscoll/receiptprinter](https://github.com/dandriscoll/receiptprinter),
-  installed by `install.sh`. It takes text on `POST :4180/print` and sends it
-  to the printer.
-- **Controls**: `controls/controller.py` reads the knobs and button (gpiozero)
-  and posts a poem from `controls/poems.py` to the print service.
+- **Controls**: `controls/controller.py` reads the knobs and button (gpiozero),
+  renders the receipt as an image (`receipt.py`: poem from `poems.py` plus the
+  department charts) and writes it to the printer as ESC/POS raster data
+  (`escpos.py`).
+- **Print service** (optional): [dandriscoll/receiptprinter](https://github.com/dandriscoll/receiptprinter),
+  installed by `install.sh`, gives a web form and `POST :4180/print` for
+  plain-text printing. The button doesn't use it.
 
 ## Install on the Pi
 
@@ -51,6 +62,15 @@ python3 controls/poems.py 10 10 10   # knob values
 python3 controls/poems.py --samples  # a spread from low to high
 ```
 
+Preview a whole receipt as an image (needs Pillow: `pip install pillow`):
+
+```bash
+python3 controls/receipt.py 10 10 10 --out preview.png
+```
+
+The departments and their charts are in the `DEPARTMENTS` list in
+`controls/receipt.py`.
+
 ## Wiring (BCM GPIO / physical pin)
 
 | Part | S1 (CLK) | S2 (DT) | SW | + | GND |
@@ -66,11 +86,7 @@ Power the encoders from 3.3V, never 5V.
 
 ## Testing without a printer
 
-```bash
-sudo mkdir -p /etc/systemd/system/receiptprinter.service.d
-printf "[Service]\nEnvironment=DRY_RUN=1\n" | sudo tee /etc/systemd/system/receiptprinter.service.d/dry-run.conf
-sudo systemctl daemon-reload && sudo systemctl restart receiptprinter
-journalctl -a -u receiptprinter -f
-```
-
-Delete `dry-run.conf` and restart to print on paper again.
+Set `DRY_RUN=1` in `/etc/systemd/system/receiptcontrols.service`, then
+`sudo systemctl daemon-reload && sudo systemctl restart receiptcontrols`. Each
+press then saves the receipt as `~/CitizenPrinter/last-print.png` instead of
+printing.
