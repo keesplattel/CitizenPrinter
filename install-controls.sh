@@ -36,6 +36,8 @@ log "Installing systemd service"
 sudo tee /etc/systemd/system/receiptcontrols.service >/dev/null <<EOF
 [Unit]
 Description=Receipt printer encoders and button
+# Never give up restarting, e.g. if the GPIO isn't ready early in boot.
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -50,7 +52,7 @@ Environment=DRY_RUN=0
 # Environment=BUTTON_PIN=23
 # Environment=LED_PIN=24
 ExecStart=/usr/bin/python3 $CONTROLS_DIR/controller.py
-Restart=on-failure
+Restart=always
 RestartSec=3
 SupplementaryGroups=gpio lp dialout
 
