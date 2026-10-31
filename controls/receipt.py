@@ -40,8 +40,8 @@ def font(name: str, size: int) -> ImageFont.FreeTypeFont:
 
 MONO = lambda size: font("Mono-Regular", size)  # noqa: E731
 MONO_BOLD = lambda size: font("Mono-Bold", size)  # noqa: E731
-SERIF = lambda size: font("Serif-Regular", size)  # noqa: E731
-SERIF_ITALIC = lambda size: font("Serif-Italic", size)  # noqa: E731
+SERIF = lambda size: font("Serif-Medium", size)  # noqa: E731
+SERIF_ITALIC = lambda size: font("Serif-MediumItalic", size)  # noqa: E731
 
 
 # --- Drawing helpers --------------------------------------------------------
@@ -66,13 +66,13 @@ def dashed_line(d, x1, y1, x2, y2, dash=4, gap=4, width=1):
 
 
 def guide_line(d, x1, y1, x2, y2):
-    """Light guide: 1-dot dashes with wide gaps."""
-    dashed_line(d, x1, y1, x2, y2, dash=2, gap=4, width=1)
+    """Light guide: short dashes with wide gaps (2 dots wide, so it still prints)."""
+    dashed_line(d, x1, y1, x2, y2, dash=3, gap=5, width=2)
 
 
 def dashed_rect(d, x1, y1, x2, y2):
     for a, b in (((x1, y1), (x2, y1)), ((x2, y1), (x2, y2)), ((x2, y2), (x1, y2)), ((x1, y2), (x1, y1))):
-        dashed_line(d, *a, *b, dash=4, gap=4, width=2)
+        dashed_line(d, *a, *b, dash=5, gap=4, width=3)
 
 
 def dashed_circle(d, cx, cy, r, segments=None):
@@ -80,7 +80,7 @@ def dashed_circle(d, cx, cy, r, segments=None):
     step = 360 / segments
     for i in range(segments):
         start = i * step
-        d.arc([cx - r, cy - r, cx + r, cy + r], start, start + step / 2, fill=INK, width=2)
+        d.arc([cx - r, cy - r, cx + r, cy + r], start, start + step / 2, fill=INK, width=3)
 
 
 def text_center(d, cx, y, text, f):
@@ -103,7 +103,7 @@ def wrap(d, text, f, width):
 # --- Charts -----------------------------------------------------------------
 # Each draws into the box (x, y, w, h).
 
-AXIS = 2
+AXIS = 3
 LETTERS = "ABCDE"
 
 
@@ -158,7 +158,7 @@ def pie_chart(d, x, y, w, h):
         d.line(
             [(cx + inner * math.cos(a), cy + inner * math.sin(a)), (cx + r * math.cos(a), cy + r * math.sin(a))],
             fill=INK,
-            width=2,
+            width=3,
         )
     d.ellipse([cx - r, cy - r, cx + r, cy + r], outline=INK, width=AXIS)
 
@@ -245,8 +245,10 @@ class Canvas:
 
     def finish(self) -> Image.Image:
         img = self.img.crop((0, 0, WIDTH, self.y + MARGIN))
-        # Hard threshold: the printer has only black and white.
-        return img.point(lambda v: PAPER if v > 140 else INK).convert("1")
+        # The printer has only black and white. A high threshold turns the
+        # anti-aliased edges of text and lines black too, which thickens them
+        # slightly: thermal paper prints thin strokes faintly.
+        return img.point(lambda v: PAPER if v > 200 else INK).convert("1")
 
 
 @cache
@@ -304,7 +306,7 @@ def draw_instructions(c: Canvas):
     c.space(4)
     c.text(INSTRUCTIONS, SERIF(20), 27, inset=pad)
     c.space(pad)
-    c.d.rectangle([MARGIN, top, WIDTH - MARGIN, c.y], outline=INK, width=2)
+    c.d.rectangle([MARGIN, top, WIDTH - MARGIN, c.y], outline=INK, width=3)
 
 
 def render(values: list[int], rng: random.Random | None = None) -> Image.Image:
