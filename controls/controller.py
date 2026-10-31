@@ -2,7 +2,7 @@
 """Physical controls for the receipt printer.
 
 Three rotary encoders set values 0..KNOB_MAX (wildness, season, hope); the
-button prints a receipt for them: a poem (poems.py) and the five department
+button prints a receipt for them: a poem (poems.py) and the four department
 charts (receipt.py), rendered as an image and written straight to the printer
 device. Pushing an encoder resets it to the middle. The button LED is on when
 ready, blinks while printing, and flashes fast after an error.

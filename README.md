@@ -5,7 +5,7 @@ A Raspberry Pi with three knobs and a button that prints receipts on a Citizen
 van Herverbinding* and a short Dutch poem about losing touch with nature and
 trying to find the way back (the knobs steer it; its title is the subtitle),
 followed by
-five research departments in random order, each with a blank chart to fill in
+four research departments in random order, each with a blank chart to fill in
 by hand with ink.
 
 | Department | Chart |
@@ -14,7 +14,6 @@ by hand with ink.
 | 2 Ecosysteemintegratie | pie chart |
 | 3 Nervositeitsreductie | line graph |
 | 4 Symbiose & wederkerigheid | pictograph |
-| 5 Verwonderingsonderzoek | dot plot |
 
 | Knob | Controls | Low → high |
 |---|---|---|

@@ -2,7 +2,7 @@
 """Renders a full receipt as a black-and-white image, 576 dots wide (80mm).
 
 Top: the ministry logo with the poem's title as subtitle, then the poem
-for the knob values and the visitor instructions. Below it: the five research
+for the knob values and the visitor instructions. Below it: the four research
 departments in random order, each with its own blank chart to fill in by hand
 with ink, and a small thank-you footer.
 
@@ -163,18 +163,6 @@ def pie_chart(d, x, y, w, h):
     d.ellipse([cx - r, cy - r, cx + r, cy + r], outline=INK, width=AXIS)
 
 
-def dot_plot(d, x, y, w, h):
-    left, right = x + 60, x + w - 60
-    base = y + h - 30
-    ticks = 11
-    for i in range(ticks):
-        tx = left + (right - left) * i / (ticks - 1)
-        d.line([(tx, base), (tx, base + 8)], fill=INK, width=AXIS)
-        text_center(d, tx, base + 10, str(i), MONO(14))
-        guide_line(d, tx, y + 10, tx, base - 4)  # stacking column
-    d.line([(left - 12, base), (right + 12, base)], fill=INK, width=AXIS)
-
-
 # --- Departments ------------------------------------------------------------
 
 
@@ -223,15 +211,6 @@ DEPARTMENTS = [
         pictograph,
         "Pictogram",
         "Kruis hoeveelheden tot de waargenomen waarde, halve waarde is een enkele lijn.",
-    ),
-    Department(
-        5,
-        "VERWONDERINGSONDERZOEK",
-        "Deze afdeling onderzoekt meetbare menselijke respons op verschijnselen zonder directe"
-        " functionele waarde.",
-        dot_plot,
-        "Stippendiagram",
-        "Eén stip per telling, gestapeld boven het getal.",
     ),
 ]
 
