@@ -1,4 +1,7 @@
-"""Draws the Ministerie van Herverbinding seal as logo.png and logo.svg.
+"""Draws the Ministerie van Herverbinding logos, each as PNG and SVG:
+
+  logo.png / logo.svg            the seal (growth rings, cut and stitched)
+  logo-text.png / logo-text.svg  the wordmark: name with "Opgericht" subtitle
 
 Needs Pillow and fontTools (pip install pillow fonttools). The SVG has its
 lettering converted to outlines, so it looks the same without the font.
@@ -181,6 +184,99 @@ def draw_svg():
     (HERE / "logo.svg").write_text("\n".join(out) + "\n")
 
 
+# --- Wordmark ---------------------------------------------------------------
+# The name in a straight line, a rule, and the founding year between diamonds.
+
+WM_PAD = 60
+WM_TITLE = ("MINISTERIE VAN HERVERBINDING", 140, 0.12)   # text, size, tracking
+WM_SUB = ("OPGERICHT MMXXVI", 72, 0.35)
+WM_RULE = 8
+WM_DIAMOND = 16
+
+
+def advances(text, size, tracking):
+    """x offset of each character, and the total width (tracking excluded at the end)."""
+    font = TTFont(FONT)
+    cmap, hmtx, upm = font.getBestCmap(), font["hmtx"], font["head"].unitsPerEm
+    xs, x = [], 0.0
+    for ch in text:
+        xs.append(x)
+        x += hmtx[cmap[ord(ch)]][0] * size / upm + size * tracking
+    return xs, x - size * tracking
+
+
+def wordmark_layout():
+    """Everything placed on the canvas: lines of text, the rule and the diamonds."""
+    title, t_size, t_track = WM_TITLE
+    sub, s_size, s_track = WM_SUB
+    t_xs, t_w = advances(title, t_size, t_track)
+    s_xs, s_w = advances(sub, s_size, s_track)
+    width = t_w + 2 * WM_PAD
+    t_base = WM_PAD + t_size * 0.73                 # cap height of Plex Mono ~0.7em
+    rule_y = t_base + t_size * 0.32
+    s_base = rule_y + WM_RULE + s_size * 1.05
+    height = s_base + WM_PAD
+    s_left = (width - s_w) / 2
+    mid_y = s_base - s_size * 0.36
+    gap = s_size * 1.1
+    return {
+        "size": (width, height),
+        "texts": [
+            (title, t_size, [(WM_PAD + x, t_base) for x in t_xs]),
+            (sub, s_size, [(s_left + x, s_base) for x in s_xs]),
+        ],
+        "rule": (WM_PAD, rule_y, WM_PAD + t_w, rule_y + WM_RULE),
+        "diamonds": [(s_left - gap, mid_y), (s_left + s_w + gap, mid_y)],
+    }
+
+
+def diamond(x, y, r=WM_DIAMOND):
+    return [(x, y - r), (x + r, y), (x, y + r), (x - r, y)]
+
+
+def draw_wordmark_png():
+    lay = wordmark_layout()
+    w, h = (round(v) for v in lay["size"])
+    img = Image.new("L", (w, h), 255)
+    d = ImageDraw.Draw(img)
+    for text, size, positions in lay["texts"]:
+        f = ImageFont.truetype(FONT, size)
+        for ch, (x, y) in zip(text, positions):
+            d.text((x, y), ch, font=f, fill=0, anchor="ls")
+    d.rectangle(lay["rule"], fill=0)
+    for x, y in lay["diamonds"]:
+        d.polygon(diamond(x, y), fill=0)
+    out = img.resize((w // 2, h // 2), Image.LANCZOS).point(lambda v: 255 if v > 128 else 0)
+    out.save(HERE / "logo-text.png")
+
+
+def draw_wordmark_svg():
+    lay = wordmark_layout()
+    w, h = lay["size"]
+    font = TTFont(FONT)
+    glyphs, cmap, upm = font.getGlyphSet(), font.getBestCmap(), font["head"].unitsPerEm
+    out = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w:.0f} {h:.0f}" width="{w / 2:.0f}" height="{h / 2:.0f}">',
+        "<title>Ministerie van Herverbinding</title>",
+        f'<rect width="{w:.0f}" height="{h:.0f}" fill="#fff"/>',
+    ]
+    for text, size, positions in lay["texts"]:
+        s = size / upm
+        for ch, (x, y) in zip(text, positions):
+            pen = SVGPathPen(glyphs)
+            glyphs[cmap[ord(ch)]].draw(pen)
+            if pen.getCommands():
+                out.append(f'<path transform="translate({x:.2f},{y:.2f}) scale({s:.5f},{-s:.5f})" d="{pen.getCommands()}"/>')
+    x1, y1, x2, y2 = lay["rule"]
+    out.append(f'<rect x="{x1:.1f}" y="{y1:.1f}" width="{x2 - x1:.1f}" height="{y2 - y1:.1f}"/>')
+    for x, y in lay["diamonds"]:
+        out.append(f'<path d="{path(diamond(x, y))}"/>')
+    out.append("</svg>")
+    (HERE / "logo-text.svg").write_text("\n".join(out) + "\n")
+
+
 if __name__ == "__main__":
     draw_png()
     draw_svg()
+    draw_wordmark_png()
+    draw_wordmark_svg()
