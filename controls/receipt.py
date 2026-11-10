@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Renders a full receipt as a black-and-white image, 576 dots wide (80mm).
 
-Top: the ministry logo with the poem's title as subtitle, then the poem
-for the knob values and the visitor instructions. Below it: the four research
+Top: the ministry logo and the visitor instructions. Then the four research
 departments in random order, each with its own blank chart to fill in by hand
-with ink, and a small thank-you footer.
+with ink. At the end: the poem for the knob values, and a small thank-you
+footer.
 
 Preview without a printer:
   python3 receipt.py 10 10 10 --out preview.png
@@ -257,35 +257,34 @@ def logo() -> Image.Image:
     return img.resize((LOGO_WIDTH, round(img.height * LOGO_WIDTH / img.width)), Image.LANCZOS)
 
 
-def draw_header(c: Canvas, subtitle: str):
+def draw_logo(c: Canvas):
     c.img.paste(logo(), ((WIDTH - LOGO_WIDTH) // 2, c.y))
-    c.space(logo().height + 24)
-    c.text(subtitle, MONO_BOLD(28), 38, center=True)
+    c.space(logo().height)
 
 
 def draw_poem(c: Canvas, values, rng):
     title, stanzas = poems.poem(values, rng)
-    draw_header(c, title)
+    c.text(title, MONO_BOLD(28), 38, center=True)
     c.space(18)
     for i, stanza in enumerate(stanzas):
         if i:
             c.space(20)
         for line in stanza:
-            c.text(line, SERIF(23), 31)
+            c.text(line, SERIF(23), 31, center=True)
 
 
 def draw_department(c: Canvas, dep: Department):
     c.rule(width=3)
     c.space(14)
-    c.text(f"AFDELING {dep.number}", MONO(18), 26)
-    c.text(dep.name, MONO_BOLD(26), 34)
-    c.space(4)
-    c.text(dep.description, SERIF_ITALIC(20), 27)
+    c.text(f"AFDELING {dep.number}", MONO(24), 32)
+    c.text(dep.name, MONO_BOLD(34), 42)  # 34 is the largest size that fits every name
+    c.space(6)
+    c.text(dep.description, SERIF_ITALIC(22), 29)
     c.space(18)
     dep.chart(c.d, MARGIN, c.y, CONTENT, dep.chart_height)
     c.space(dep.chart_height + 18)
-    c.text(dep.chart_name, MONO_BOLD(19), 26, center=True)
-    c.text(dep.instruction, SERIF(18), 24, center=True)
+    c.text(dep.chart_name, MONO_BOLD(22), 29, center=True)
+    c.text(dep.instruction, SERIF(19), 25, center=True)
     c.space(30)
 
 
@@ -312,12 +311,16 @@ def draw_instructions(c: Canvas):
 def render(values: list[int], rng: random.Random | None = None) -> Image.Image:
     rng = rng or random.Random()
     c = Canvas()
-    draw_poem(c, values, rng)
+    draw_logo(c)
     c.space(30)
     draw_instructions(c)
     c.space(40)
     for dep in rng.sample(DEPARTMENTS, len(DEPARTMENTS)):
         draw_department(c, dep)
+    c.rule(width=3)
+    c.space(30)
+    draw_poem(c, values, rng)
+    c.space(30)
     c.rule(width=3)
     c.space(14)
     c.text(FOOTER, SERIF_ITALIC(16), 21, center=True)
