@@ -22,17 +22,40 @@ node_major() { node -p 'process.versions.node.split(".")[0]'; }
 
 log "Installing system packages"
 sudo apt-get update -qq
-sudo apt-get install -y -qq git ca-certificates curl usbutils
+sudo apt-get install -y -qq git ca-certificates curl usbutils xz-utils python3
+
+ARMV6=0
+[ "$(uname -m)" = "armv6l" ] && ARMV6=1
+
+# NodeSource has no armv6 builds (Pi Zero W / Pi 1), so those get the latest
+# Node 22 from unofficial-builds.nodejs.org, checksum-verified, in /usr/local.
+install_node_armv6() {
+  local base=https://unofficial-builds.nodejs.org/download/release
+  local ver
+  ver="$(curl -fsSL "$base/index.json" | python3 -c '
+import json, sys
+for r in json.load(sys.stdin):
+    if r["version"].startswith("v22.") and "linux-armv6l" in r["files"]:
+        print(r["version"]); break')"
+  [ -n "$ver" ] || { echo "No armv6 Node 22 build found on $base" >&2; exit 1; }
+  local file="node-$ver-linux-armv6l.tar.xz"
+  local tmp; tmp="$(mktemp -d)"
+  log "Installing Node.js $ver for armv6 (unofficial-builds.nodejs.org)"
+  curl -fsSL -o "$tmp/$file" "$base/$ver/$file"
+  curl -fsSL "$base/$ver/SHASUMS256.txt" | grep " $file\$" | (cd "$tmp" && sha256sum -c -)
+  sudo tar -xJf "$tmp/$file" -C /usr/local --strip-components=1 --no-same-owner
+  rm -rf "$tmp"
+  hash -r
+}
 
 if ! command -v node >/dev/null || [ "$(node_major)" -lt 20 ]; then
-  if [ "$(uname -m)" = "armv6l" ]; then
-    echo "This is an armv6 Pi (Zero/1); NodeSource has no Node 20+ builds for it." >&2
-    echo "Install Node 20+ manually (e.g. from unofficial-builds.nodejs.org) and re-run." >&2
-    exit 1
+  if [ "$ARMV6" = 1 ]; then
+    install_node_armv6
+  else
+    log "Installing Node.js 22 (NodeSource)"
+    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+    sudo apt-get install -y -qq nodejs
   fi
-  log "Installing Node.js 22 (NodeSource)"
-  curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-  sudo apt-get install -y -qq nodejs
 fi
 log "Node $(node -v), npm $(npm -v)"
 
@@ -47,7 +70,13 @@ fi
 
 log "Building (this can take a few minutes on a Pi)"
 cd "$APP_DIR"
-npm ci --no-audit --no-fund
+if [ "$ARMV6" = 1 ]; then
+  # Dev tools like esbuild ship armv7 binaries whose install checks crash on
+  # armv6. The build only needs tsc (plain JS), so skip install scripts.
+  npm ci --no-audit --no-fund --ignore-scripts
+else
+  npm ci --no-audit --no-fund
+fi
 npm run build
 npm prune --omit=dev --no-audit --no-fund
 
